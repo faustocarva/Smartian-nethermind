@@ -459,6 +459,6 @@ namespace Nethermind.JsonRpc.Test.Modules
                 "{\"jsonrpc\":\"2.0\",\"result\":{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0xaaaaaaaa8583de65cc752fe3fad5098643244d22\",\"gas\":\"0x17d7840\",\"input\":null,\"to\":\"0xd6a8d04cb9846759416457e2c593c99390092df6\",\"value\":\"0x0\"},\"error\":\"block gas limit exceeded\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null},\"id\":67}",
                 serialized, serialized.Replace("\"", "\\\""));
         }
-        
+
     }
 }
