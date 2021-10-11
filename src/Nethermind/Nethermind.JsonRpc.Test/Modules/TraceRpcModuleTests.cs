@@ -54,6 +54,7 @@ namespace Nethermind.JsonRpc.Test.Modules
             public async Task Build(ISpecProvider specProvider = null)
             {
                 JsonRpcConfig = new JsonRpcConfig();
+                JsonRpcConfig.GasCap = 4000000;
                 Blockchain = await TestRpcBlockchain.ForTest(SealEngineType.NethDev).Build(specProvider);
                 await Blockchain.AddFunds(TestItem.AddressA, 1000.Ether());
                 await Blockchain.AddFunds(TestItem.AddressB, 1000.Ether());
@@ -541,8 +542,7 @@ namespace Nethermind.JsonRpc.Test.Modules
                 "trace_call", request, request2);
 
             Assert.AreEqual(
-                "{\"jsonrpc\":\"2.0\",\"result\":{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0xaaaaaaaa8583de65cc752fe3fad5098643244d22\",\"gas\":\"0x17d7840\",\"input\":null,\"to\":\"0xd6a8d04cb9846759416457e2c593c99390092df6\",\"value\":\"0x0\"},\"error\":\"block gas limit exceeded\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null},\"id\":67}",
-                serialized, serialized.Replace("\"", "\\\""));
+                "{\"jsonrpc\":\"2.0\",\"result\":{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0xaaaaaaaa8583de65cc752fe3fad5098643244d22\",\"gas\":\"0x3cb6f8\",\"input\":\"0x\",\"to\":\"0xd6a8d04cb9846759416457e2c593c99390092df6\",\"value\":\"0x0\"},\"result\":{\"gasUsed\":\"0x0\",\"output\":\"0x\"},\"subtraces\":0,\"traceAddress\":[],\"type\":\"call\"}],\"vmTrace\":null},\"id\":67}", serialized, serialized.Replace("\"", "\\\""));
         }
 
     }
