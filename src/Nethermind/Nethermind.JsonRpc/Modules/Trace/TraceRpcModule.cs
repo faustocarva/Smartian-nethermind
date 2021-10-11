@@ -76,6 +76,14 @@ namespace Nethermind.JsonRpc.Modules.Trace
             foreach (var obj in a)
             {
                 TransactionForRpc txForRpc = obj.Item1;
+                if (txForRpc.Gas == null || txForRpc.Gas == 0)
+                {
+                    txForRpc.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
+                }
+                else
+                {
+                    txForRpc.Gas = Math.Min(_jsonRpcConfig.GasCap ?? long.MaxValue, txForRpc.Gas.Value);
+                }
                 Transaction tx = txForRpc.ToTransaction();
                 string[] traceTypes = obj.Item2;
 

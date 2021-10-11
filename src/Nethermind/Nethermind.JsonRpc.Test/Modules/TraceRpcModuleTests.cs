@@ -199,6 +199,21 @@ namespace Nethermind.JsonRpc.Test.Modules
                 serialized, serialized.Replace("\"", "\\\""));
         }
         
+         [Test]
+        public async Task Trace_callMany_test()
+        {
+            Context context = new();
+            await context.Build();
+            string request1 = "[[{\"from\":\"0xf208db34710e73601d6372cfb788d1d6304a168b\",\"to\":\"0x9fcf7c9a511e85f82446e9f4ab80ed6d9019e9e4\",\"gasPrice\":\"0x24ef0a3315\"},[\"trace\"]],[{\"from\":\"0x0157c04c9a45ffbc62b787636b4a7222c7c54856\",\"to\":\"0xc89563a9289e1d63315616352c797d1b950f178b\",\"gasPrice\":\"0x24f4677d95\"},[\"trace\"]]]";
+            string request2 = "\"latest\"";
+
+            string serialized = RpcTest.TestSerializedRequest(
+                EthModuleFactory.Converters.Union(TraceModuleFactory.Converters).ToList(), context.TraceRpcModule,
+                "trace_callMany", request1, request2);
+
+            Assert.AreEqual("{\"jsonrpc\":\"2.0\",\"result\":[{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0xf208db34710e73601d6372cfb788d1d6304a168b\",\"gas\":\"0x5f5e100\",\"input\":null,\"to\":\"0x9fcf7c9a511e85f82446e9f4ab80ed6d9019e9e4\",\"value\":\"0x0\"},\"error\":\"block gas limit exceeded\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null},{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0x0157c04c9a45ffbc62b787636b4a7222c7c54856\",\"gas\":\"0x5f5e100\",\"input\":null,\"to\":\"0xc89563a9289e1d63315616352c797d1b950f178b\",\"value\":\"0x0\"},\"error\":\"block gas limit exceeded\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null}],\"id\":67}", serialized, serialized.Replace("\"", "\\\""));
+        }
+        
         // [Test]
         // public async Task Trace_filter_replayTr()
         // {
