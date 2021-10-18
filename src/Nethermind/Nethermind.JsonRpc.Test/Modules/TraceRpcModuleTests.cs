@@ -54,7 +54,7 @@ namespace Nethermind.JsonRpc.Test.Modules
             public async Task Build(ISpecProvider specProvider = null)
             {
                 JsonRpcConfig = new JsonRpcConfig();
-                JsonRpcConfig.GasCap = 4000000;
+                // JsonRpcConfig.GasCap = 4000000;
                 Blockchain = await TestRpcBlockchain.ForTest(SealEngineType.NethDev).Build(specProvider);
                 await Blockchain.AddFunds(TestItem.AddressA, 1000.Ether());
                 await Blockchain.AddFunds(TestItem.AddressB, 1000.Ether());
@@ -103,7 +103,7 @@ namespace Nethermind.JsonRpc.Test.Modules
         }
         
         [Test]
-        public async Task trace_call_test()
+        public async Task trace_call_test2()
         {
             Context context = new();
             await context.Build();
@@ -178,58 +178,25 @@ namespace Nethermind.JsonRpc.Test.Modules
                 serialized, serialized.Replace("\"", "\\\""));
         }
         
-        [Test]
-        public async Task Trace_filter_return_invalid_params()
-        {
-            Context context = new();
-            await context.Build();
-            string request =
-                "[[{\"from\":\"0xfe35e70599578efef562e1f1cdc9ef693b865e9d\",\"to\":\"0x8cf85548ae57a91f8132d0831634c0fcef06e505\",\"gasPrice\":\"0xb25cc5c5c\"},[\"trace\"]],[{\"from\":\"0x2a6ae6f33729384a00b4ffbd25e3f1bf1b9f5b8d\",\"to\":\"0xab736519b5433974059da38da74b8db5376942cd\",\"gasPrice\":\"0xb2b29a6dc\"},[\"trace\"]]]";
-
-            // string request =
-            //     "{\"data\":[[{\"from\":\"0xfe35e70599578efef562e1f1cdc9ef693b865e9d\",\"to\":\"0x8cf85548ae57a91f8132d0831634c0fcef06e505\",\"gasPrice\":\"0xb25cc5c5c\"},[\"trace\"]],[{\"from\":\"0x2a6ae6f33729384a00b4ffbd25e3f1bf1b9f5b8d\",\"to\":\"0xab736519b5433974059da38da74b8db5376942cd\",\"gasPrice\":\"0xb2b29a6dc\"},[\"trace\"]]]}";
-            //
-            string request2 = "\"latest\"";
-
-            string serialized = RpcTest.TestSerializedRequest(
-                EthModuleFactory.Converters.Union(TraceModuleFactory.Converters).ToList(), context.TraceRpcModule,
-                "trace_callMany", request,request2);
-
-            Assert.AreEqual(
-                "{\"jsonrpc\":\"2.0\",\"result\":[{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0xfe35e70599578efef562e1f1cdc9ef693b865e9d\",\"gas\":\"0x0\",\"input\":null,\"to\":\"0x8cf85548ae57a91f8132d0831634c0fcef06e505\",\"value\":\"0x0\"},\"error\":\"gas limit below intrinsic gas\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null},{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0x2a6ae6f33729384a00b4ffbd25e3f1bf1b9f5b8d\",\"gas\":\"0x0\",\"input\":null,\"to\":\"0xab736519b5433974059da38da74b8db5376942cd\",\"value\":\"0x0\"},\"error\":\"gas limit below intrinsic gas\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null}],\"id\":67}",
-                serialized, serialized.Replace("\"", "\\\""));
-        }
-        
-         [Test]
-        public async Task Trace_callMany_test()
-        {
-            Context context = new();
-            await context.Build();
-            string request1 = "[[{\"from\":\"0xf208db34710e73601d6372cfb788d1d6304a168b\",\"to\":\"0x9fcf7c9a511e85f82446e9f4ab80ed6d9019e9e4\",\"gasPrice\":\"0x24ef0a3315\"},[\"trace\"]],[{\"from\":\"0x0157c04c9a45ffbc62b787636b4a7222c7c54856\",\"to\":\"0xc89563a9289e1d63315616352c797d1b950f178b\",\"gasPrice\":\"0x24f4677d95\"},[\"trace\"]]]";
-            string request2 = "\"latest\"";
-
-            string serialized = RpcTest.TestSerializedRequest(
-                EthModuleFactory.Converters.Union(TraceModuleFactory.Converters).ToList(), context.TraceRpcModule,
-                "trace_callMany", request1, request2);
-
-            Assert.AreEqual("{\"jsonrpc\":\"2.0\",\"result\":[{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0xf208db34710e73601d6372cfb788d1d6304a168b\",\"gas\":\"0x5f5e100\",\"input\":null,\"to\":\"0x9fcf7c9a511e85f82446e9f4ab80ed6d9019e9e4\",\"value\":\"0x0\"},\"error\":\"block gas limit exceeded\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null},{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0x0157c04c9a45ffbc62b787636b4a7222c7c54856\",\"gas\":\"0x5f5e100\",\"input\":null,\"to\":\"0xc89563a9289e1d63315616352c797d1b950f178b\",\"value\":\"0x0\"},\"error\":\"block gas limit exceeded\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null}],\"id\":67}", serialized, serialized.Replace("\"", "\\\""));
-        }
-        
         // [Test]
-        // public async Task Trace_filter_replayTr()
+        // public async Task Trace_filter_return_invalid_params()
         // {
         //     Context context = new();
         //     await context.Build();
-        //     string request = "\"0xd83e221468ee17699e45b2c7b2a58496945998ffbb06ed003e6c654bd4ab3b91\"";
-        //     string request2 = "[\"trace\"]";
+        //     string request =
+        //         "[[{\"from\":\"0xfe35e70599578efef562e1f1cdc9ef693b865e9d\",\"to\":\"0x8cf85548ae57a91f8132d0831634c0fcef06e505\",\"gasPrice\":\"0xb25cc5c5c\"},[\"trace\"]],[{\"from\":\"0x2a6ae6f33729384a00b4ffbd25e3f1bf1b9f5b8d\",\"to\":\"0xab736519b5433974059da38da74b8db5376942cd\",\"gasPrice\":\"0xb2b29a6dc\"},[\"trace\"]]]";
+        //     
+        //     string request2 = "\"latest\"";
+        //
         //     string serialized = RpcTest.TestSerializedRequest(
         //         EthModuleFactory.Converters.Union(TraceModuleFactory.Converters).ToList(), context.TraceRpcModule,
-        //         "trace_replayTransaction", request,request2);
+        //         "trace_callMany", request,request2);
         //
         //     Assert.AreEqual(
-        //         "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32001,\"message\":\"Block 340 could not be found\"},\"id\":67}",
+        //         "{\"jsonrpc\":\"2.0\",\"result\":[{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0xfe35e70599578efef562e1f1cdc9ef693b865e9d\",\"gas\":\"0x0\",\"input\":null,\"to\":\"0x8cf85548ae57a91f8132d0831634c0fcef06e505\",\"value\":\"0x0\"},\"error\":\"gas limit below intrinsic gas\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null},{\"output\":\"0x\",\"stateDiff\":null,\"trace\":[{\"action\":{\"callType\":\"call\",\"from\":\"0x2a6ae6f33729384a00b4ffbd25e3f1bf1b9f5b8d\",\"gas\":\"0x0\",\"input\":null,\"to\":\"0xab736519b5433974059da38da74b8db5376942cd\",\"value\":\"0x0\"},\"error\":\"gas limit below intrinsic gas\",\"subtraces\":0,\"traceAddress\":null,\"type\":null}],\"vmTrace\":null}],\"id\":67}",
         //         serialized, serialized.Replace("\"", "\\\""));
         // }
+        
         
         [Test]
         public async Task Trace_filter_return_fail_from_block_higher_than_to_block()

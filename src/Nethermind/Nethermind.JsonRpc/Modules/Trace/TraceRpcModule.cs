@@ -62,13 +62,18 @@ namespace Nethermind.JsonRpc.Modules.Trace
         {
             return types.Select(s => (ParityTraceTypes) Enum.Parse(typeof(ParityTraceTypes), s, true)).Aggregate((t1, t2) => t1 | t2);
         }
+        
+        
         public ResultWrapper<ParityTxTraceFromReplay> trace_call(TransactionForRpc message, string[] traceTypes, BlockParameter? blockParameter = null)
         {
             blockParameter ??= BlockParameter.Latest;
             
             if (message.Gas == null || message.Gas == 0)
             {
+                /*
                 message.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
+                */
+                message.Gas = 4000000;
             }
             else
             {
@@ -88,7 +93,9 @@ namespace Nethermind.JsonRpc.Modules.Trace
                 TransactionForRpc txForRpc = obj.Item1;
                 if (txForRpc.Gas == null || txForRpc.Gas == 0)
                 {
-                    txForRpc.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
+                    // txForRpc.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
+                    txForRpc.Gas = 4000000;
+                    
                 }
                 else
                 {
