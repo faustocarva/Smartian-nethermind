@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
-using MathNet.Numerics.Distributions;
 using Nethermind.Blockchain.Find;
 using Nethermind.Blockchain.Receipts;
 using Nethermind.Blockchain.Tracing;
@@ -47,7 +46,7 @@ namespace Nethermind.JsonRpc.Modules.Trace
         private readonly ISpecProvider _specProvider;
         private readonly TimeSpan _cancellationTokenTimeout;
 
-        public TraceRpcModule(IReceiptFinder receiptFinder, ITracer tracer, IBlockFinder blockFinder, IJsonRpcConfig jsonRpcConfig, ISpecProvider specProvider ,ILogManager logManager)
+        public TraceRpcModule(IReceiptFinder? receiptFinder, ITracer? tracer, IBlockFinder? blockFinder, IJsonRpcConfig? jsonRpcConfig, ISpecProvider? specProvider, ILogManager? logManager)
         {
             _receiptFinder = receiptFinder ?? throw new ArgumentNullException(nameof(receiptFinder));
             _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
@@ -63,10 +62,21 @@ namespace Nethermind.JsonRpc.Modules.Trace
         {
             return types.Select(s => (ParityTraceTypes) Enum.Parse(typeof(ParityTraceTypes), s, true)).Aggregate((t1, t2) => t1 | t2);
         }
-
-        public ResultWrapper<ParityTxTraceFromReplay> trace_call(TransactionForRpc message, string[] traceTypes, BlockParameter blockParameter)
+        public ResultWrapper<ParityTxTraceFromReplay> trace_call(TransactionForRpc message, string[] traceTypes, BlockParameter? blockParameter = null)
         {
+            blockParameter ??= BlockParameter.Latest;
+            
+            if (message.Gas == null || message.Gas == 0)
+            {
+                message.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
+            }
+            else
+            {
+                message.Gas = Math.Min(_jsonRpcConfig.GasCap ?? long.MaxValue, message.Gas.Value);
+            }
+            
             Transaction tx = message.ToTransaction();
+            
             return TraceTx(tx, traceTypes, blockParameter);
         }
 
@@ -214,17 +224,16 @@ namespace Nethermind.JsonRpc.Modules.Trace
             ResultWrapper<ParityTxTraceFromStore[]> traceTransaction = trace_transaction(txHash);
             
             List<ParityTxTraceFromStore> traces = new();
-            for (int i = 0; i < positions.Length; ++i)
+            foreach (long t in positions)
             {
-                if (traceTransaction.Data.Length > positions[i]+1)
+                if (traceTransaction.Data.Length > t+1)
                 {
-                    ParityTxTraceFromStore tr = traceTransaction.Data[positions[i]+1];
+                    ParityTxTraceFromStore tr = traceTransaction.Data[t+1];
                     traces.Add(tr);
                 }
             }
             
             return ResultWrapper<ParityTxTraceFromStore[]>.Success(traces.ToArray());
-
         }
 
         public ResultWrapper<ParityTxTraceFromStore[]> trace_transaction(Keccak txHash)

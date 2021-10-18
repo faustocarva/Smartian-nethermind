@@ -161,7 +161,7 @@ namespace Nethermind.JsonRpc.Modules.Eth
 
         public Task<ResultWrapper<long?>> eth_blockNumber()
         {
-            long number = _blockchainBridge.BeamHead?.Number ?? 0;
+            long number = _blockchainBridge.HeadBlock?.Number ?? 0;
             return Task.FromResult(ResultWrapper<long?>.Success(number));
         }
 
@@ -362,15 +362,15 @@ namespace Nethermind.JsonRpc.Modules.Eth
         }
 
         public ResultWrapper<string> eth_call(TransactionForRpc transactionCall, BlockParameter? blockParameter = null) =>
-            new CallTxExecutor(_blockchainBridge, _blockFinder, _rpcConfig)
+            new CallTxExecutor(_blockchainBridge, _blockFinder, _rpcConfig, _specProvider)
                 .ExecuteTx(transactionCall, blockParameter);
 
         public ResultWrapper<UInt256?> eth_estimateGas(TransactionForRpc transactionCall, BlockParameter blockParameter) =>
-            new EstimateGasTxExecutor(_blockchainBridge, _blockFinder, _rpcConfig)
+            new EstimateGasTxExecutor(_blockchainBridge, _blockFinder, _rpcConfig, _specProvider)
                 .ExecuteTx(transactionCall, blockParameter);
 
         public ResultWrapper<AccessListForRpc> eth_createAccessList(TransactionForRpc transactionCall, BlockParameter? blockParameter = null, bool optimize = true) =>
-            new CreateAccessListTxExecutor(_blockchainBridge, _blockFinder, _rpcConfig, optimize)
+            new CreateAccessListTxExecutor(_blockchainBridge, _blockFinder, _rpcConfig, _specProvider, optimize)
                 .ExecuteTx(transactionCall, blockParameter);
 
         public ResultWrapper<BlockForRpc> eth_getBlockByHash(Keccak blockHash, bool returnFullTransactionObjects)
@@ -622,25 +622,36 @@ namespace Nethermind.JsonRpc.Modules.Eth
                 }
             }
 
-            BlockParameter fromBlock = filter.FromBlock;
-            BlockParameter toBlock = filter.ToBlock;
+            // because of lazy evaluation of enumerable, we need to do the validation here first
+            CancellationTokenSource cancellationTokenSource = new(_rpcConfig.Timeout);
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
 
-            try
+            SearchResult<BlockHeader> toBlockResult = _blockFinder.SearchForHeader(filter.ToBlock);
+            if (toBlockResult.IsError)
             {
-                CancellationTokenSource cancellationTokenSource = new(_rpcConfig.Timeout);
-                return ResultWrapper<IEnumerable<FilterLog>>.Success(GetLogs(fromBlock, toBlock,
-                    cancellationTokenSource, cancellationTokenSource.Token));
+                cancellationTokenSource.Dispose();
+                return ResultWrapper<IEnumerable<FilterLog>>.Fail(toBlockResult);
             }
-            catch (ArgumentException e)
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            SearchResult<BlockHeader> fromBlockResult = _blockFinder.SearchForHeader(filter.FromBlock);
+            if (fromBlockResult.IsError)
             {
-                switch (e.Message)
-                {
-                    case ILogFinder.NotFoundError:
-                        return ResultWrapper<IEnumerable<FilterLog>>.Fail(e.Message, ErrorCodes.ResourceNotFound);
-                    default:
-                        return ResultWrapper<IEnumerable<FilterLog>>.Fail(e.Message, ErrorCodes.InvalidParams);
-                }
+                cancellationTokenSource.Dispose();
+                return ResultWrapper<IEnumerable<FilterLog>>.Fail(fromBlockResult);
             }
+            cancellationToken.ThrowIfCancellationRequested();
+
+            long fromBlockNumber = fromBlockResult.Object!.Number;
+            long toBlockNumber = toBlockResult.Object!.Number;
+            if (fromBlockNumber > toBlockNumber && toBlockNumber != 0)
+            {
+                cancellationTokenSource.Dispose();
+                return ResultWrapper<IEnumerable<FilterLog>>.Fail($"'From' block '{fromBlockNumber}' is later than 'to' block '{toBlockNumber}'.", ErrorCodes.InvalidParams);
+            }
+
+            return ResultWrapper<IEnumerable<FilterLog>>.Success(GetLogs(filter.FromBlock, filter.ToBlock,
+                cancellationTokenSource, cancellationToken));
         }
 
         public ResultWrapper<IEnumerable<byte[]>> eth_getWork()

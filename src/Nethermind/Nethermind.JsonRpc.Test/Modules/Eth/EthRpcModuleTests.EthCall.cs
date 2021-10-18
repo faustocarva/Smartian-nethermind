@@ -22,6 +22,7 @@ using Nethermind.Core.Crypto;
 using Nethermind.Core.Extensions;
 using Nethermind.Core.Test.Builders;
 using Nethermind.Evm;
+using Nethermind.Int256;
 using Nethermind.JsonRpc.Data;
 using Nethermind.Specs;
 using Nethermind.Specs.Forks;
@@ -232,6 +233,26 @@ namespace Nethermind.JsonRpc.Test.Modules.Eth
             string serialized = ctx._test.TestEthRpc("eth_call", ctx._test.JsonSerializer.Serialize(transaction));
             Assert.AreEqual(
                 "{\"jsonrpc\":\"2.0\",\"result\":\"0x000000000000000000000000000000000000000000000000000000002da282a8\",\"id\":67}",
+                serialized);
+        }
+        
+        [Test]
+        public async Task Eth_call_with_revert()
+        {
+            using Context ctx = await Context.CreateWithLondonEnabled();
+
+            byte[] code = Prepare.EvmCode
+                .PushData(0)
+                .PushData(0)
+                .Op(Instruction.REVERT)
+                .Done;
+
+            string dataStr = code.ToHexString();
+            TransactionForRpc transaction = ctx._test.JsonSerializer.Deserialize<TransactionForRpc>(
+                $"{{\"from\": \"0x32e4e4c7c5d1cea5db5f9202a9e4d99e56c91a24\", \"type\": \"0x2\", \"data\": \"{dataStr}\"}}");
+            string serialized = ctx._test.TestEthRpc("eth_call", ctx._test.JsonSerializer.Serialize(transaction));
+            Assert.AreEqual(
+                "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32015,\"message\":\"VM execution error.\",\"data\":\"revert\"},\"id\":67}",
                 serialized);
         }
     }
