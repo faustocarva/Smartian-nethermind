@@ -73,7 +73,7 @@ namespace Nethermind.JsonRpc.Modules.Trace
                 /*
                 message.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
                 */
-                message.Gas = 4000000;
+                message.Gas = 50000000;
             }
             else
             {
