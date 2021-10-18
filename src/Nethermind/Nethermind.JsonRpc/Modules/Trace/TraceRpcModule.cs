@@ -94,7 +94,7 @@ namespace Nethermind.JsonRpc.Modules.Trace
                 if (txForRpc.Gas == null || txForRpc.Gas == 0)
                 {
                     // txForRpc.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
-                    txForRpc.Gas = 4000000;
+                    txForRpc.Gas = 50000000;
                     
                 }
                 else
