@@ -70,10 +70,10 @@ namespace Nethermind.JsonRpc.Modules.Trace
             
             if (message.Gas == null || message.Gas == 0)
             {
-                /*
+                
                 message.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
-                */
-                message.Gas = 50000000;
+                
+                // message.Gas = 40000000;
             }
             else
             {
@@ -85,16 +85,17 @@ namespace Nethermind.JsonRpc.Modules.Trace
             return TraceTx(tx, traceTypes, blockParameter);
         }
 
-        public ResultWrapper<ParityTxTraceFromReplay[]> trace_callMany(Tuple<TransactionForRpc, string[]>[] a, BlockParameter numberOrTag)
+        public ResultWrapper<ParityTxTraceFromReplay[]> trace_callMany(Tuple<TransactionForRpc, string[]>[] a, BlockParameter? numberOrTag = null)
         {
+            numberOrTag ??= BlockParameter.Latest;
             List<ParityTxTraceFromReplay> traces = new();
             foreach (var obj in a)
             {
                 TransactionForRpc txForRpc = obj.Item1;
                 if (txForRpc.Gas == null || txForRpc.Gas == 0)
                 {
-                    // txForRpc.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
-                    txForRpc.Gas = 50000000;
+                    txForRpc.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
+                    // txForRpc.Gas = 50000000;
                     
                 }
                 else

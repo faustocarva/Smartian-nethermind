@@ -190,7 +190,9 @@ namespace Nethermind.Evm.TransactionProcessing
                 {
                     TraceLogInvalidTx(transaction,
                         $"BLOCK_GAS_LIMIT_EXCEEDED {gasLimit} > {block.GasLimit} - {block.GasUsed}");
-                    QuickFail(transaction, block, txTracer, eip658NotEnabled, "block gas limit exceeded");
+                    string reason =
+                        $"block gas limit exceeded+ gasLimit: {gasLimit} block.GasLimit: {block.GasLimit} block.GasUsed: {block.GasUsed}";
+                    QuickFail(transaction, block, txTracer, eip658NotEnabled, reason);
                     return;
                 }
             }
@@ -232,8 +234,8 @@ namespace Nethermind.Evm.TransactionProcessing
             if (notSystemTransaction)
             {
                 UInt256 senderBalance = _stateProvider.GetBalance(caller);
-                if (!restore && ((ulong)intrinsicGas * effectiveGasPrice + value > senderBalance ||
-                                 senderReservedGasPayment + value > senderBalance))
+                if (!restore && ((ulong)intrinsicGas * effectiveGasPrice[0] + value[0] > senderBalance[0] ||
+                                 senderReservedGasPayment[0] + value[0] > senderBalance[0]))
                 {
                     TraceLogInvalidTx(transaction,
                         $"INSUFFICIENT_SENDER_BALANCE: ({caller})_BALANCE = {senderBalance}");
