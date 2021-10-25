@@ -29,7 +29,8 @@ namespace Nethermind.Blockchain.Processing
             Transaction currentTx, 
             BlockReceiptsTracer receiptsTracer, 
             ProcessingOptions processingOptions,
-            IStateProvider stateProvider)
+            IStateProvider stateProvider,
+            bool restore)
         {
             if ((processingOptions & ProcessingOptions.DoNotVerifyNonce) != 0)
             {
@@ -37,7 +38,15 @@ namespace Nethermind.Blockchain.Processing
             }
 
             receiptsTracer.StartNewTxTrace(currentTx);
-            transactionProcessor.Execute(currentTx, block.Header, receiptsTracer);
+            // if (restore)
+            // {
+            transactionProcessor.CallAndRestore(currentTx, block.Header, receiptsTracer);
+            // }
+            // else
+            // {
+            //     transactionProcessor.Execute(currentTx, block.Header, receiptsTracer);
+            // }
+            
             receiptsTracer.EndTxTrace();
         }
     }

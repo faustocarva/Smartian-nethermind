@@ -90,7 +90,7 @@ namespace Nethermind.Blockchain.Processing
                 LinkedHashSet<Transaction> transactionsInBlock = new(ByHashTxComparer.Instance);
                 foreach (Transaction currentTx in transactions)
                 {
-                    TxAction action = ProcessTransaction(block, currentTx, i++, receiptsTracer, processingOptions, transactionsInBlock);
+                    TxAction action = ProcessTransaction(block, currentTx, i++, receiptsTracer, processingOptions, transactionsInBlock,true);
                     if (action == TxAction.Stop) break;
                 }
 
@@ -108,7 +108,8 @@ namespace Nethermind.Blockchain.Processing
                 BlockReceiptsTracer receiptsTracer,
                 ProcessingOptions processingOptions, 
                 LinkedHashSet<Transaction> transactionsInBlock,
-                bool addToBlock = true)
+                bool addToBlock = true,
+                bool restore = false)
             {
                 AddingTxEventArgs args = _blockProductionTransactionPicker.CanAddTransaction(block, currentTx, transactionsInBlock, _stateProvider);
 
@@ -118,7 +119,7 @@ namespace Nethermind.Blockchain.Processing
                 }
                 else
                 {
-                    _transactionProcessor.ProcessTransaction(block, currentTx, receiptsTracer, processingOptions, _stateProvider);
+                    _transactionProcessor.ProcessTransaction(block, currentTx, receiptsTracer, processingOptions, _stateProvider, restore);
                     
                     if (addToBlock)
                     {

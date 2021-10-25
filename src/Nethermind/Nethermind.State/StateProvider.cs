@@ -291,8 +291,14 @@ namespace Nethermind.State
             {
                 throw new InvalidOperationException($"Account {address} is null when decrementing nonce.");
             }
-            
+
+            // Account changedAccount = account.WithChangedNonce(account.Nonce);
+            //
+            // if (account.Nonce != 0)
+            // {
             Account changedAccount = account.WithChangedNonce(account.Nonce - 1);
+            // }
+                
             if (_logger.IsTrace) _logger.Trace($"  Update {address} N {account.Nonce} -> {changedAccount.Nonce}");
             PushUpdate(address, changedAccount);
         }

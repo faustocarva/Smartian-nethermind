@@ -23,5 +23,7 @@ namespace Nethermind.Evm.TransactionProcessing
     public interface ITransactionProcessorAdapter
     {
         void Execute(Transaction transaction, BlockHeader block, ITxTracer txTracer);
+        
+        void CallAndRestore(Transaction transaction, BlockHeader block, ITxTracer txTracer);
     }
 }

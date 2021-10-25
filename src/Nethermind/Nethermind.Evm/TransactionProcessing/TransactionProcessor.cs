@@ -98,7 +98,7 @@ namespace Nethermind.Evm.TransactionProcessing
             // we need to treat the result of previous transaction as the original value of next transaction
             // when we do not commit
             _worldState.TakeSnapshot(true);
-            Execute(transaction, block, txTracer, ExecutionOptions.None);
+            CallAndRestore(transaction, block, txTracer);
         }
 
         public void Execute(Transaction transaction, BlockHeader block, ITxTracer txTracer)
@@ -135,6 +135,7 @@ namespace Nethermind.Evm.TransactionProcessing
 
             // restore is CallAndRestore - previous call, we will restore state after the execution
             bool restore = (executionOptions & ExecutionOptions.Restore) != ExecutionOptions.None;
+            // bool restore = true;
             // commit - is for standard execute, we will commit thee state after execution 
             bool commit = (executionOptions & ExecutionOptions.Commit) != ExecutionOptions.None || eip658NotEnabled;
             //!commit - is for build up during block production, we won't commit state after each transaction to support rollbacks
@@ -416,7 +417,7 @@ namespace Nethermind.Evm.TransactionProcessing
                     _stateProvider.AddToBalance(caller, senderReservedGasPayment, spec);
                     if (notSystemTransaction)
                     {
-                        _stateProvider.DecrementNonce(caller);
+                       _stateProvider.DecrementNonce(caller);
                     }
 
                     _stateProvider.Commit(spec);
