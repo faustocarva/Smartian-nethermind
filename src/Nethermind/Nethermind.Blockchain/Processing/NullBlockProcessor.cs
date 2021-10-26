@@ -28,7 +28,7 @@ namespace Nethermind.Blockchain.Processing
 
         public static IBlockProcessor Instance { get; } = new NullBlockProcessor();
 
-        public Block[] Process(Keccak newBranchStateRoot, List<Block> suggestedBlocks, ProcessingOptions processingOptions, IBlockTracer blockTracer)
+        public Block[] Process(Keccak newBranchStateRoot, List<Block> suggestedBlocks, ProcessingOptions processingOptions, IBlockTracer blockTracer, bool restore = false)
         {
             return suggestedBlocks.ToArray();
         }

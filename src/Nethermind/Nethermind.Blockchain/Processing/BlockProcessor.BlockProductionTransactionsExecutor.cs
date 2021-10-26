@@ -82,7 +82,7 @@ namespace Nethermind.Blockchain.Processing
                 remove => _blockProductionTransactionPicker.AddingTransaction -= value;
             }
 
-            public virtual TxReceipt[] ProcessTransactions(Block block, ProcessingOptions processingOptions, BlockReceiptsTracer receiptsTracer, IReleaseSpec spec)
+            public virtual TxReceipt[] ProcessTransactions(Block block, ProcessingOptions processingOptions, BlockReceiptsTracer receiptsTracer, IReleaseSpec spec, bool restore = false)
             {
                 IEnumerable<Transaction> transactions = GetTransactions(block);
 
@@ -90,7 +90,7 @@ namespace Nethermind.Blockchain.Processing
                 LinkedHashSet<Transaction> transactionsInBlock = new(ByHashTxComparer.Instance);
                 foreach (Transaction currentTx in transactions)
                 {
-                    TxAction action = ProcessTransaction(block, currentTx, i++, receiptsTracer, processingOptions, transactionsInBlock,true);
+                    TxAction action = ProcessTransaction(block, currentTx, i++, receiptsTracer, processingOptions, transactionsInBlock,true, restore);
                     if (action == TxAction.Stop) break;
                 }
 

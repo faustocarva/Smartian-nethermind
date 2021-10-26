@@ -72,7 +72,7 @@ namespace Nethermind.Blockchain.Test
                     _allowedToFail.Add(hash);
                 }
 
-                public Block[] Process(Keccak newBranchStateRoot, List<Block> suggestedBlocks, ProcessingOptions processingOptions, IBlockTracer blockTracer)
+                public Block[] Process(Keccak newBranchStateRoot, List<Block> suggestedBlocks, ProcessingOptions processingOptions, IBlockTracer blockTracer, bool restore = false)
                 {
                     if (blockTracer != NullBlockTracer.Instance)
                     {

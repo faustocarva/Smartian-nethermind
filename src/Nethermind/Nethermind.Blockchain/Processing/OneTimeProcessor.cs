@@ -47,14 +47,14 @@ namespace Nethermind.Blockchain.Processing
             return _processor.StopAsync(processRemainingBlocks);
         }
 
-        public Block Process(Block block, ProcessingOptions options, IBlockTracer tracer)
+        public Block Process(Block block, ProcessingOptions options, IBlockTracer tracer, bool restore = false)
         {
             lock (_lock)
             {
                 Block result;
                 try
                 {
-                    result = _processor.Process(block, options, tracer);
+                    result = _processor.Process(block, options, tracer, restore);
                 }
                 finally
                 {

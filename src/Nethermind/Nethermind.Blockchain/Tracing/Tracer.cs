@@ -37,7 +37,7 @@ namespace Nethermind.Blockchain.Tracing
             _processingOptions = processingOptions;
         }
 
-        public Keccak Trace(Block block, IBlockTracer blockTracer)
+        public Keccak Trace(Block block, IBlockTracer blockTracer, bool restore = false)
         {
             /* We force process since we want to process a block that has already been processed in the past and normally it would be ignored.
                We also want to make it read only so the state is not modified persistently in any way. */
@@ -46,7 +46,7 @@ namespace Nethermind.Blockchain.Tracing
 
             try
             {
-                _blockProcessor.Process(block, _processingOptions, blockTracer);
+                _blockProcessor.Process(block, _processingOptions, blockTracer, restore);
             }
             catch (Exception)
             {

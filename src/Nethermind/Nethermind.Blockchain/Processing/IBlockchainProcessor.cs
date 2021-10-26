@@ -30,7 +30,7 @@ namespace Nethermind.Blockchain.Processing
         
         Task StopAsync(bool processRemainingBlocks = false);
         
-        Block? Process(Block block, ProcessingOptions options, IBlockTracer tracer);
+        Block? Process(Block block, ProcessingOptions options, IBlockTracer tracer, bool restore = false);
 
         bool IsProcessingBlocks(ulong? maxProcessingInterval);
     }

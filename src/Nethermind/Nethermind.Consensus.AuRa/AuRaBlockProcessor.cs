@@ -83,7 +83,7 @@ namespace Nethermind.Consensus.AuRa
             set => _auRaValidator = value;
         }
 
-        protected override TxReceipt[] ProcessBlock(Block block, IBlockTracer blockTracer, ProcessingOptions options)
+        protected override TxReceipt[] ProcessBlock(Block block, IBlockTracer blockTracer, ProcessingOptions options, bool restore = false)
         {
             ValidateAuRa(block);
             AuRaValidator.OnBlockProcessingStart(block, options);

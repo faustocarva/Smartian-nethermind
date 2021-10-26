@@ -98,7 +98,8 @@ namespace Nethermind.Evm.TransactionProcessing
             // we need to treat the result of previous transaction as the original value of next transaction
             // when we do not commit
             _worldState.TakeSnapshot(true);
-            CallAndRestore(transaction, block, txTracer);
+            Execute(transaction, block, txTracer, ExecutionOptions.None);
+            //CallAndRestore(transaction, block, txTracer);
         }
 
         public void Execute(Transaction transaction, BlockHeader block, ITxTracer txTracer)

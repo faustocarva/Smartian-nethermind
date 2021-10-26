@@ -32,7 +32,7 @@ namespace Nethermind.Blockchain.Tracing
         /// <param name="block">Block to trace.</param>
         /// <param name="tracer">Trace to act on block processing events.</param>
         /// <returns>Post trace state root</returns>
-        Keccak Trace(Block block, IBlockTracer tracer);
+        Keccak Trace(Block block, IBlockTracer tracer, bool restore = false);
         
         void Accept(ITreeVisitor visitor, Keccak stateRoot);
     }
