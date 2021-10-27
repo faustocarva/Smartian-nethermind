@@ -99,7 +99,6 @@ namespace Nethermind.Evm.TransactionProcessing
             // when we do not commit
             _worldState.TakeSnapshot(true);
             Execute(transaction, block, txTracer, ExecutionOptions.None);
-            //CallAndRestore(transaction, block, txTracer);
         }
 
         public void Execute(Transaction transaction, BlockHeader block, ITxTracer txTracer)
@@ -136,7 +135,6 @@ namespace Nethermind.Evm.TransactionProcessing
 
             // restore is CallAndRestore - previous call, we will restore state after the execution
             bool restore = (executionOptions & ExecutionOptions.Restore) != ExecutionOptions.None;
-            // bool restore = true;
             // commit - is for standard execute, we will commit thee state after execution 
             bool commit = (executionOptions & ExecutionOptions.Commit) != ExecutionOptions.None || eip658NotEnabled;
             //!commit - is for build up during block production, we won't commit state after each transaction to support rollbacks
@@ -173,6 +171,13 @@ namespace Nethermind.Evm.TransactionProcessing
             {
                 TraceLogInvalidTx(transaction, "SENDER_NOT_SPECIFIED");
                 QuickFail(transaction, block, txTracer, eip658NotEnabled, "sender not specified");
+                return;
+            }
+
+            if (_stateProvider.IsInvalidContractSender(spec, caller))
+            {
+                TraceLogInvalidTx(transaction, "SENDER_IS_CONTRACT");
+                QuickFail(transaction, block, txTracer, eip658NotEnabled, "sender has deployed code");
                 return;
             }
 
@@ -236,8 +241,8 @@ namespace Nethermind.Evm.TransactionProcessing
             if (notSystemTransaction)
             {
                 UInt256 senderBalance = _stateProvider.GetBalance(caller);
-                if (!restore && ((ulong)intrinsicGas * effectiveGasPrice[0] + value[0] > senderBalance[0] ||
-                                 senderReservedGasPayment[0] + value[0] > senderBalance[0]))
+                if (!restore && ((ulong)intrinsicGas * effectiveGasPrice + value > senderBalance ||
+                                 senderReservedGasPayment + value > senderBalance))
                 {
                     TraceLogInvalidTx(transaction,
                         $"INSUFFICIENT_SENDER_BALANCE: ({caller})_BALANCE = {senderBalance}");
@@ -328,7 +333,7 @@ namespace Nethermind.Evm.TransactionProcessing
                         state.WarmUp(recipient); // eip-2929
                     }
 
-                    substate = _virtualMachine.Run(state, _worldState, spec, txTracer, intrinsicGas);
+                    substate = _virtualMachine.Run(state, _worldState, txTracer, intrinsicGas);
                     unspentGas = state.GasAvailable;
 
                     if (txTracer.IsTracingAccess)
@@ -390,17 +395,35 @@ namespace Nethermind.Evm.TransactionProcessing
             if (_logger.IsTrace) _logger.Trace("Gas spent: " + spentGas);
 
             Address gasBeneficiary = block.GasBeneficiary;
-            if (statusCode == StatusCode.Failure || !(substate?.DestroyList.Contains(gasBeneficiary) ?? false))
+            bool gasBeneficiaryNotDestroyed = substate?.DestroyList.Contains(gasBeneficiary) != true;
+            if (statusCode == StatusCode.Failure || gasBeneficiaryNotDestroyed)
             {
                 if (notSystemTransaction)
                 {
-                    if (!_stateProvider.AccountExists(gasBeneficiary))
+                    UInt256 fees = (ulong)spentGas * premiumPerGas;
+                    if (_stateProvider.AccountExists(gasBeneficiary))
                     {
-                        _stateProvider.CreateAccount(gasBeneficiary, (ulong)spentGas * premiumPerGas);
+                        _stateProvider.AddToBalance(gasBeneficiary, fees, spec);
                     }
                     else
                     {
-                        _stateProvider.AddToBalance(gasBeneficiary, (ulong)spentGas * premiumPerGas, spec);
+                        _stateProvider.CreateAccount(gasBeneficiary, fees);
+                    }
+
+                    if (!transaction.IsFree() && spec.IsEip1559Enabled && spec.Eip1559FeeCollector is not null)
+                    {
+                        UInt256 burntFees = (ulong)spentGas * block.BaseFeePerGas;
+                        if (!burntFees.IsZero)
+                        {
+                            if (_stateProvider.AccountExists(spec.Eip1559FeeCollector))
+                            {
+                                _stateProvider.AddToBalance(spec.Eip1559FeeCollector, burntFees, spec);
+                            }
+                            else
+                            {
+                                _stateProvider.CreateAccount(spec.Eip1559FeeCollector, burntFees);
+                            }
+                        }
                     }
                 }
             }
@@ -418,7 +441,7 @@ namespace Nethermind.Evm.TransactionProcessing
                     _stateProvider.AddToBalance(caller, senderReservedGasPayment, spec);
                     if (notSystemTransaction)
                     {
-                       _stateProvider.DecrementNonce(caller);
+                        _stateProvider.DecrementNonce(caller);
                     }
 
                     _stateProvider.Commit(spec);

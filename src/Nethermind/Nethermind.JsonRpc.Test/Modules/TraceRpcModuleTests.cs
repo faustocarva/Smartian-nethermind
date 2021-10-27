@@ -198,7 +198,7 @@ namespace Nethermind.JsonRpc.Test.Modules
                 "{\"jsonrpc\":\"2.0\",\"result\":[],\"id\":67}",
                 serialized, serialized.Replace("\"", "\\\""));
         }
-        
+
 
         [Test]
         public async Task Trace_filter_return_expected_json()
@@ -488,8 +488,65 @@ namespace Nethermind.JsonRpc.Test.Modules
             Assert.AreEqual(3, traces.Data.Length);
             // Assert.NotNull(traces.Data[0].Error);
             Assert.AreEqual(transaction2.Hash!, traces.Data[0].TransactionHash);
+            
+            long[] positions = {0};
+
+            ResultWrapper<ParityTxTraceFromStore[]> tracesGet = context.TraceRpcModule.trace_get(transaction2.Hash!, positions);
+            Assert.AreEqual(1, tracesGet.Data.Length);
+            Assert.AreEqual(transaction2.Hash!, tracesGet.Data[0].TransactionHash);
+            Assert.AreEqual(traces.Data[1].TransactionHash, tracesGet.Data[0].TransactionHash);
+            Assert.AreEqual(traces.Data[1].BlockHash, tracesGet.Data[0].BlockHash);
+            Assert.AreEqual(traces.Data[1].BlockNumber, tracesGet.Data[0].BlockNumber);
         }
         
+        [Test]
+        public async Task trace_transaction_with_error_reverted()
+        {
+            Context context = new();
+            await context.Build();
+            TestRpcBlockchain blockchain = context.Blockchain;
+            UInt256 currentNonceAddressA = blockchain.State.GetAccount(TestItem.AddressA).Nonce;
+            UInt256 currentNonceAddressB = blockchain.State.GetAccount(TestItem.AddressB).Nonce;
+            await blockchain.AddFunds(TestItem.AddressA, 10000.Ether());
+            byte[] deployedCode = new byte[3];
+            byte[] initCode = Prepare.EvmCode
+                .ForInitOf(deployedCode)
+                .Done;
+
+            byte[] createCode = Prepare.EvmCode
+                .Create(initCode, 0)
+                .Op(Instruction.STOP)
+                .Done;
+            
+            Transaction transaction1 = Build.A.Transaction.WithNonce(currentNonceAddressA++)
+                .WithData(createCode)
+                .WithTo(null)
+                .WithGasLimit(93548).SignedAndResolved(TestItem.PrivateKeyA).TestObject;
+            await blockchain.AddBlock(transaction1);
+
+
+            Address? contractAddress = ContractAddress.From(TestItem.AddressA, currentNonceAddressA);
+            byte[] code = Prepare.EvmCode
+                .Call(contractAddress, 50000)
+                .Call(contractAddress, 50000)
+                .Op(Instruction.REVERT)
+                .Done;
+            
+            Transaction transaction2 = Build.A.Transaction.WithNonce(currentNonceAddressB++)
+                .WithData(code).SignedAndResolved(TestItem.PrivateKeyB)
+                .WithTo(null)
+                .WithGasLimit(93548).TestObject;
+            await blockchain.AddBlock(transaction2);
+
+            ResultWrapper<ParityTxTraceFromStore[]> traces = context.TraceRpcModule.trace_transaction(transaction2.Hash!);
+            Assert.AreEqual(3, traces.Data.Length);
+            Assert.AreEqual(transaction2.Hash!, traces.Data[0].TransactionHash);
+
+            string serialized = new EthereumJsonSerializer().Serialize(traces.Data);
+          
+            Assert.AreEqual("[{\"action\":{\"traceAddress\":[],\"callType\":\"create\",\"includeInTrace\":true,\"isPrecompiled\":false,\"type\":\"create\",\"creationMethod\":\"create\",\"from\":\"0x942921b14f1b1c385cd7e0cc2ef7abe5598c8358\",\"to\":\"0xd6a48bcd4c5ad5adacfab677519c25ce7b2805a5\",\"gas\":\"0x9a6c\",\"value\":\"0x1\",\"input\":\"0x60006000600060006000736b5887043de753ecfa6269f947129068263ffbe261c350f160006000600060006000736b5887043de753ecfa6269f947129068263ffbe261c350f1fd\",\"subtraces\":[{\"traceAddress\":[0],\"callType\":\"call\",\"includeInTrace\":true,\"isPrecompiled\":false,\"type\":\"call\",\"creationMethod\":\"create2\",\"from\":\"0xd6a48bcd4c5ad5adacfab677519c25ce7b2805a5\",\"to\":\"0x6b5887043de753ecfa6269f947129068263ffbe2\",\"gas\":\"0x2dcd\",\"value\":\"0x0\",\"input\":\"0x\",\"result\":{\"gasUsed\":\"0x0\",\"output\":\"0x\"},\"subtraces\":[]},{\"traceAddress\":[1],\"callType\":\"call\",\"includeInTrace\":true,\"isPrecompiled\":false,\"type\":\"call\",\"creationMethod\":\"create2\",\"from\":\"0xd6a48bcd4c5ad5adacfab677519c25ce7b2805a5\",\"to\":\"0x6b5887043de753ecfa6269f947129068263ffbe2\",\"gas\":\"0x2d56\",\"value\":\"0x0\",\"input\":\"0x\",\"result\":{\"gasUsed\":\"0x0\",\"output\":\"0x\"},\"subtraces\":[]}],\"error\":\"Reverted\"},\"blockHash\":\"0xfa74e932520ee416ecb12171c115b3ad14112ffd2d612646ceaff69e54e06a94\",\"blockNumber\":18,\"result\":null,\"subtraces\":2,\"traceAddress\":[],\"transactionHash\":\"0x787616b8756424622f162fc3817331517ef941366f28db452defc0214bc36b22\",\"transactionPosition\":0,\"type\":\"create\",\"error\":\"Reverted\"},{\"action\":{\"traceAddress\":[0],\"callType\":\"call\",\"includeInTrace\":true,\"isPrecompiled\":false,\"type\":\"call\",\"creationMethod\":\"create2\",\"from\":\"0xd6a48bcd4c5ad5adacfab677519c25ce7b2805a5\",\"to\":\"0x6b5887043de753ecfa6269f947129068263ffbe2\",\"gas\":\"0x2dcd\",\"value\":\"0x0\",\"input\":\"0x\",\"result\":{\"gasUsed\":\"0x0\",\"output\":\"0x\"},\"subtraces\":[]},\"blockHash\":\"0xfa74e932520ee416ecb12171c115b3ad14112ffd2d612646ceaff69e54e06a94\",\"blockNumber\":18,\"result\":{\"gasUsed\":\"0x0\",\"output\":\"0x\"},\"subtraces\":0,\"traceAddress\":[0],\"transactionHash\":\"0x787616b8756424622f162fc3817331517ef941366f28db452defc0214bc36b22\",\"transactionPosition\":0,\"type\":\"call\"},{\"action\":{\"traceAddress\":[1],\"callType\":\"call\",\"includeInTrace\":true,\"isPrecompiled\":false,\"type\":\"call\",\"creationMethod\":\"create2\",\"from\":\"0xd6a48bcd4c5ad5adacfab677519c25ce7b2805a5\",\"to\":\"0x6b5887043de753ecfa6269f947129068263ffbe2\",\"gas\":\"0x2d56\",\"value\":\"0x0\",\"input\":\"0x\",\"result\":{\"gasUsed\":\"0x0\",\"output\":\"0x\"},\"subtraces\":[]},\"blockHash\":\"0xfa74e932520ee416ecb12171c115b3ad14112ffd2d612646ceaff69e54e06a94\",\"blockNumber\":18,\"result\":{\"gasUsed\":\"0x0\",\"output\":\"0x\"},\"subtraces\":0,\"traceAddress\":[1],\"transactionHash\":\"0x787616b8756424622f162fc3817331517ef941366f28db452defc0214bc36b22\",\"transactionPosition\":0,\"type\":\"call\"}]",serialized, serialized.Replace("\"", "\\\""));
+        }
+
         [Test]
         public async Task trace_timeout_is_separate_for_rpc_calls()
         {
