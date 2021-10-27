@@ -20,6 +20,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using Nethermind.Blockchain.Find;
+using Nethermind.Blockchain.Processing;
 using Nethermind.Blockchain.Receipts;
 using Nethermind.Blockchain.Tracing;
 using Nethermind.Core;
@@ -73,7 +74,6 @@ namespace Nethermind.JsonRpc.Modules.Trace
                 
                 message.Gas = _jsonRpcConfig.GasCap ?? long.MaxValue;
                 
-                // message.Gas = 40000000;
             }
             else
             {
@@ -145,7 +145,7 @@ namespace Nethermind.JsonRpc.Modules.Trace
 
             Block block = new(header, new[] {tx}, Enumerable.Empty<BlockHeader>());
 
-            IReadOnlyCollection<ParityLikeTxTrace> result = TraceBlock(block, GetParityTypes(traceTypes), null, restore);
+            IReadOnlyCollection<ParityLikeTxTrace> result = TraceBlock(block, GetParityTypes(traceTypes), null);
             return ResultWrapper<ParityTxTraceFromReplay>.Success(new ParityTxTraceFromReplay(result.SingleOrDefault()));
         }
 
@@ -262,13 +262,13 @@ namespace Nethermind.JsonRpc.Modules.Trace
             return ResultWrapper<ParityTxTraceFromStore[]>.Success(ParityTxTraceFromStore.FromTxTrace(txTrace));
         }
 
-        private IReadOnlyCollection<ParityLikeTxTrace> TraceBlock(Block block, ParityTraceTypes traceTypes, TxTraceFilter txTraceFilter = null, bool restore = false)
+        private IReadOnlyCollection<ParityLikeTxTrace> TraceBlock(Block block, ParityTraceTypes traceTypes, TxTraceFilter txTraceFilter = null)
         {
             using CancellationTokenSource cancellationTokenSource = new(_cancellationTokenTimeout);
             CancellationToken cancellationToken = cancellationTokenSource.Token;
 
             ParityLikeBlockTracer listener = new(traceTypes, txTraceFilter, _specProvider);
-            _tracer.Trace(block, listener.WithCancellation(cancellationToken), restore);
+            _tracer.Trace(block, listener.WithCancellation(cancellationToken));
 
             return listener.BuildResult();
         }

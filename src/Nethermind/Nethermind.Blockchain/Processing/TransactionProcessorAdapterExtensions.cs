@@ -38,15 +38,9 @@ namespace Nethermind.Blockchain.Processing
             }
 
             receiptsTracer.StartNewTxTrace(currentTx);
-            if (restore)
-            {
-                transactionProcessor.CallAndRestore(currentTx, block.Header, receiptsTracer);
-            }
-            else
-            {
-                 transactionProcessor.Execute(currentTx, block.Header, receiptsTracer);
-            }
             
+            transactionProcessor.Execute(currentTx, block.Header, receiptsTracer);
+
             receiptsTracer.EndTxTrace();
         }
     }

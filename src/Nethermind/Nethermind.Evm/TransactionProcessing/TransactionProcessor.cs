@@ -328,7 +328,7 @@ namespace Nethermind.Evm.TransactionProcessing
                         state.WarmUp(recipient); // eip-2929
                     }
 
-                    substate = _virtualMachine.Run(state, _worldState, spec, txTracer);
+                    substate = _virtualMachine.Run(state, _worldState, spec, txTracer, intrinsicGas);
                     unspentGas = state.GasAvailable;
 
                     if (txTracer.IsTracingAccess)
