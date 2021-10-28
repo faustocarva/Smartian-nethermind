@@ -40,8 +40,7 @@ namespace Nethermind.Blockchain.Processing
             Keccak newBranchStateRoot,
             List<Block> suggestedBlocks,
             ProcessingOptions processingOptions,
-            IBlockTracer blockTracer,
-            bool restore = false);
+            IBlockTracer blockTracer);
 
         /// <summary>
         /// Fired when a branch is being processed.
@@ -60,7 +59,7 @@ namespace Nethermind.Blockchain.Processing
         
         public interface IBlockTransactionsExecutor
         {
-            TxReceipt[] ProcessTransactions(Block block, ProcessingOptions processingOptions, BlockReceiptsTracer receiptsTracer, IReleaseSpec spec, bool restore = false);
+            TxReceipt[] ProcessTransactions(Block block, ProcessingOptions processingOptions, BlockReceiptsTracer receiptsTracer, IReleaseSpec spec);
             event EventHandler<TxProcessedEventArgs> TransactionProcessed;
         }
     }

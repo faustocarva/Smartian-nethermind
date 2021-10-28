@@ -70,6 +70,8 @@ namespace Nethermind.Blockchain.Processing
             }
 
             protected EventHandler<TxProcessedEventArgs>? _transactionProcessed;
+            
+
             event EventHandler<TxProcessedEventArgs>? IBlockProcessor.IBlockTransactionsExecutor.TransactionProcessed
             {
                 add => _transactionProcessed += value;
@@ -82,7 +84,7 @@ namespace Nethermind.Blockchain.Processing
                 remove => _blockProductionTransactionPicker.AddingTransaction -= value;
             }
 
-            public virtual TxReceipt[] ProcessTransactions(Block block, ProcessingOptions processingOptions, BlockReceiptsTracer receiptsTracer, IReleaseSpec spec, bool restore = false)
+            public virtual TxReceipt[] ProcessTransactions(Block block, ProcessingOptions processingOptions, BlockReceiptsTracer receiptsTracer, IReleaseSpec spec)
             {
                 IEnumerable<Transaction> transactions = GetTransactions(block);
 
@@ -90,7 +92,7 @@ namespace Nethermind.Blockchain.Processing
                 LinkedHashSet<Transaction> transactionsInBlock = new(ByHashTxComparer.Instance);
                 foreach (Transaction currentTx in transactions)
                 {
-                    TxAction action = ProcessTransaction(block, currentTx, i++, receiptsTracer, processingOptions, transactionsInBlock,true, restore);
+                    TxAction action = ProcessTransaction(block, currentTx, i++, receiptsTracer, processingOptions, transactionsInBlock,true);
                     if (action == TxAction.Stop) break;
                 }
 
@@ -119,7 +121,7 @@ namespace Nethermind.Blockchain.Processing
                 }
                 else
                 {
-                    _transactionProcessor.ProcessTransaction(block, currentTx, receiptsTracer, processingOptions, _stateProvider, restore);
+                    _transactionProcessor.ProcessTransaction(block, currentTx, receiptsTracer, processingOptions, _stateProvider);
                     
                     if (addToBlock)
                     {

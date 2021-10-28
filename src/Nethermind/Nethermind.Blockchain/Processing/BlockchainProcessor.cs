@@ -267,7 +267,7 @@ namespace Nethermind.Blockchain.Processing
 
         int IBlockProcessingQueue.Count => _blockQueue.Count + _recoveryQueue.Count;
 
-        public Block? Process(Block suggestedBlock, ProcessingOptions options, IBlockTracer tracer, bool restore = false)
+        public Block? Process(Block suggestedBlock, ProcessingOptions options, IBlockTracer tracer)
         {
             if (!RunSimpleChecksAheadOfProcessing(suggestedBlock, options))
             {
@@ -292,7 +292,7 @@ namespace Nethermind.Blockchain.Processing
             PrepareBlocksToProcess(suggestedBlock, options, processingBranch);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
-            Block[]? processedBlocks = ProcessBranch(processingBranch, options, tracer, restore);
+            Block[]? processedBlocks = ProcessBranch(processingBranch, options, tracer);
             stopwatch.Stop();
             if (processedBlocks == null)
             {
@@ -361,8 +361,7 @@ namespace Nethermind.Blockchain.Processing
 
         private Block[]? ProcessBranch(ProcessingBranch processingBranch,
             ProcessingOptions options,
-            IBlockTracer tracer,
-            bool restore = false)
+            IBlockTracer tracer)
         {
             void DeleteInvalidBlocks(Keccak invalidBlockHash)
             {
@@ -384,8 +383,7 @@ namespace Nethermind.Blockchain.Processing
                     processingBranch.Root,
                     processingBranch.BlocksToProcess,
                     options,
-                    tracer,
-                    restore);
+                    tracer);
             }
             catch (InvalidBlockException ex)
             {

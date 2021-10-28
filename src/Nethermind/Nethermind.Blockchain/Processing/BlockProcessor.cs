@@ -91,7 +91,7 @@ namespace Nethermind.Blockchain.Processing
         }
 
         // TODO: move to branch processor
-        public Block[] Process(Keccak newBranchStateRoot, List<Block> suggestedBlocks, ProcessingOptions options, IBlockTracer blockTracer, bool restore = false)
+        public Block[] Process(Keccak newBranchStateRoot, List<Block> suggestedBlocks, ProcessingOptions options, IBlockTracer blockTracer)
         {
             if (suggestedBlocks.Count == 0) return Array.Empty<Block>();
             
@@ -116,7 +116,7 @@ namespace Nethermind.Blockchain.Processing
                     }
 
                     _witnessCollector.Reset();
-                    (Block processedBlock, TxReceipt[] receipts) = ProcessOne(suggestedBlocks[i], options, blockTracer, restore);
+                    (Block processedBlock, TxReceipt[] receipts) = ProcessOne(suggestedBlocks[i], options, blockTracer);
                     processedBlocks[i] = processedBlock;
 
                     // be cautious here as AuRa depends on processing
@@ -161,6 +161,7 @@ namespace Nethermind.Blockchain.Processing
                 throw;
             }
         }
+        
 
         public event EventHandler<BlocksProcessingEventArgs>? BlocksProcessing;
 
@@ -215,13 +216,13 @@ namespace Nethermind.Blockchain.Processing
         }
         
         // TODO: block processor pipeline
-        private (Block Block, TxReceipt[] Receipts) ProcessOne(Block suggestedBlock, ProcessingOptions options, IBlockTracer blockTracer, bool restore = false)
+        private (Block Block, TxReceipt[] Receipts) ProcessOne(Block suggestedBlock, ProcessingOptions options, IBlockTracer blockTracer)
         {
             if (_logger.IsTrace) _logger.Trace($"Processing block {suggestedBlock.ToString(Block.Format.Short)} ({options})");
 
             ApplyDaoTransition(suggestedBlock);
             Block block = PrepareBlockForProcessing(suggestedBlock);
-            TxReceipt[] receipts = ProcessBlock(block, blockTracer, options, restore);
+            TxReceipt[] receipts = ProcessBlock(block, blockTracer, options);
             ValidateProcessedBlock(suggestedBlock, options, block, receipts);
             if ((options & ProcessingOptions.StoreReceipts) != 0)
             {
@@ -245,8 +246,7 @@ namespace Nethermind.Blockchain.Processing
         protected virtual TxReceipt[] ProcessBlock(
             Block block, 
             IBlockTracer blockTracer, 
-            ProcessingOptions options,
-            bool restore = false)
+            ProcessingOptions options)
         {
             IReleaseSpec spec = _specProvider.GetSpec(block.Number);
             

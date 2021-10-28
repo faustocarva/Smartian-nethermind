@@ -65,7 +65,7 @@ namespace Nethermind.Mev
             _worldState = new WorldState(stateProvider, storageProvider);
         }
         
-        public override TxReceipt[] ProcessTransactions(Block block, ProcessingOptions processingOptions, BlockReceiptsTracer receiptsTracer, IReleaseSpec spec, bool restore = false)
+        public override TxReceipt[] ProcessTransactions(Block block, ProcessingOptions processingOptions, BlockReceiptsTracer receiptsTracer, IReleaseSpec spec)
         {
             IEnumerable<Transaction> transactions = GetTransactions(block);
             LinkedHashSet<Transaction> transactionsInBlock = new(ByHashTxComparer.Instance);
