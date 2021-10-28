@@ -82,7 +82,7 @@ namespace Nethermind.JsonRpc.Modules.Trace
             
             Transaction tx = message.ToTransaction();
             
-            return TraceTx(tx, traceTypes, blockParameter, true);
+            return TraceTx(tx, traceTypes, blockParameter);
         }
 
         public ResultWrapper<ParityTxTraceFromReplay[]> trace_callMany(Tuple<TransactionForRpc, string[]>[] a, BlockParameter? numberOrTag = null)
@@ -103,7 +103,7 @@ namespace Nethermind.JsonRpc.Modules.Trace
                 Transaction tx = txForRpc.ToTransaction();
                 string[] traceTypes = obj.Item2;
 
-                ResultWrapper<ParityTxTraceFromReplay> trace = TraceTx(tx, traceTypes, numberOrTag, true);
+                ResultWrapper<ParityTxTraceFromReplay> trace = TraceTx(tx, traceTypes, numberOrTag);
                 traces.Add(trace.Data);
             }
             
@@ -116,7 +116,7 @@ namespace Nethermind.JsonRpc.Modules.Trace
             return TraceTx(tx, traceTypes, BlockParameter.Latest);
         }
 
-        private ResultWrapper<ParityTxTraceFromReplay> TraceTx(Transaction tx, string[] traceTypes, BlockParameter blockParameter, bool restore = false)
+        private ResultWrapper<ParityTxTraceFromReplay> TraceTx(Transaction tx, string[] traceTypes, BlockParameter blockParameter)
         {
             SearchResult<BlockHeader> headerSearch = _blockFinder.SearchForHeader(blockParameter);
             if (headerSearch.IsError)
@@ -268,7 +268,7 @@ namespace Nethermind.JsonRpc.Modules.Trace
             CancellationToken cancellationToken = cancellationTokenSource.Token;
 
             ParityLikeBlockTracer listener = new(traceTypes, txTraceFilter, _specProvider);
-            _tracer.Trace(block, listener.WithCancellation(cancellationToken));
+            _tracer.Trace(block, listener.WithCancellation(cancellationToken), ProcessingOptions.Trace);
 
             return listener.BuildResult();
         }

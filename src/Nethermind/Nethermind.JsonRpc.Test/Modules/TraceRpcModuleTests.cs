@@ -711,7 +711,7 @@ namespace Nethermind.JsonRpc.Test.Modules
             Assert.AreEqual(2, tr.Data.Length);
           
         }
-        
-        
+
+
     }
 }
