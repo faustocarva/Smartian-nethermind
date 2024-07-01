@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the Nethermind. If not, see <http://www.gnu.org/licenses/>.
  */
+using System;
+using Nethermind.Core.Extensions;
 
 namespace Nethermind.Abi
 {
@@ -32,7 +34,8 @@ namespace Nethermind.Abi
         {
             if (arg is bool input)
             {
-                return new[] {input ? (byte) 1 : (byte) 0};
+                Span<byte> bytes = stackalloc byte[1] { input ? (byte)1 : (byte)0 };
+                return bytes.PadLeft(UInt256.LengthInBytes);
             }
 
             throw new AbiException(AbiEncodingExceptionMessage);
@@ -40,7 +43,8 @@ namespace Nethermind.Abi
 
         public override (object, int) Decode(byte[] data, int position, bool packed)
         {
-            return (data[position] == 1, position + 1);
+            int length = UInt256.LengthInBytes;
+            return (data[position + length - 1] == 1, position + length);
         }
     }
 }
