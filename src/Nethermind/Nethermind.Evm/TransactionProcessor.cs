@@ -63,9 +63,9 @@ namespace Nethermind.Evm
 
         private void QuickFail(Transaction tx, BlockHeader block, ITxTracer txTracer, bool readOnly)
         {
-            block.GasUsed += (long) tx.GasLimit;
+            block.GasUsed += (long)tx.GasLimit;
             Address recipient = tx.To ?? Address.OfContract(tx.SenderAddress, _stateProvider.GetNonce(tx.SenderAddress));
-            if (txTracer.IsTracingReceipt) txTracer.MarkAsFailed(recipient, (long) tx.GasLimit, Bytes.Empty, "invalid");
+            if (txTracer.IsTracingReceipt) txTracer.MarkAsFailed(recipient, (long)tx.GasLimit, Bytes.Empty, "invalid");
         }
 
         private EthereumEcdsa _ecdsa;
@@ -82,7 +82,7 @@ namespace Nethermind.Evm
             Address recipient = transaction.To;
             UInt256 value = transaction.Value;
             UInt256 gasPrice = transaction.GasPrice;
-            long gasLimit = (long) transaction.GasLimit;
+            long gasLimit = (long)transaction.GasLimit;
             byte[] machineCode = transaction.Init;
             byte[] data = transaction.Data ?? Bytes.Empty;
 
@@ -127,7 +127,7 @@ namespace Nethermind.Evm
 
                 if (sender != transaction.SenderAddress)
                 {
-                    if(_logger.IsWarn) _logger.Warn($"TX recovery issue fixed - tx was coming with sender {sender} and the now it recovers to {transaction.SenderAddress}");
+                    if (_logger.IsWarn) _logger.Warn($"TX recovery issue fixed - tx was coming with sender {sender} and the now it recovers to {transaction.SenderAddress}");
                     sender = transaction.SenderAddress;
                 }
                 else
@@ -143,7 +143,7 @@ namespace Nethermind.Evm
             if (notSystemTransaction)
             {
                 UInt256 senderBalance = _stateProvider.GetBalance(sender);
-                if ((ulong) intrinsicGas * gasPrice + value > senderBalance)
+                if ((ulong)intrinsicGas * gasPrice + value > senderBalance)
                 {
                     TraceLogInvalidTx(transaction, $"INSUFFICIENT_SENDER_BALANCE: ({sender})_BALANCE = {senderBalance}");
                     QuickFail(transaction, block, txTracer, readOnly);
@@ -164,7 +164,7 @@ namespace Nethermind.Evm
                 _stateProvider.IncrementNonce(sender);
             }
 
-            _stateProvider.SubtractFromBalance(sender, (ulong) gasLimit * gasPrice, spec);
+            _stateProvider.SubtractFromBalance(sender, (ulong)gasLimit * gasPrice, spec);
 
             // TODO: I think we can skip this commit and decrease the tree operations this way
             _stateProvider.Commit(spec, txTracer.IsTracingState ? txTracer : null);
@@ -184,10 +184,11 @@ namespace Nethermind.Evm
                 if (transaction.IsContractCreation)
                 {
                     recipient = Address.OfContract(sender, _stateProvider.GetNonce(sender) - 1);
-                    if (transaction.DeployAddress != null) {
+                    if (transaction.DeployAddress != null)
+                    {
                         if (recipient != transaction.DeployAddress)
                         {
-                            System.Console.WriteLine("[Warning] Unexpected deployed address " + recipient.ToString() + ", forcefully set to " + transaction.DeployAddress.ToString());
+                            System.Console.Error.WriteLine("[Warning] Unexpected deployed address " + recipient.ToString() + ", forcefully set to " + transaction.DeployAddress.ToString());
                         }
                         recipient = transaction.DeployAddress;
                     }
@@ -202,7 +203,7 @@ namespace Nethermind.Evm
                         {
                             if (sender == recipient)
                             {
-                                System.Console.WriteLine("[Warning] Deployed address is same to sender (" + recipient.ToString() + ")");
+                                System.Console.Error.WriteLine("[Warning] Deployed address is same to sender (" + recipient.ToString() + ")");
                             }
                             else
                             {
@@ -294,11 +295,11 @@ namespace Nethermind.Evm
                 {
                     if (!_stateProvider.AccountExists(gasBeneficiary))
                     {
-                        _stateProvider.CreateAccount(gasBeneficiary, (ulong) spentGas * gasPrice);
+                        _stateProvider.CreateAccount(gasBeneficiary, (ulong)spentGas * gasPrice);
                     }
                     else
                     {
-                        _stateProvider.AddToBalance(gasBeneficiary, (ulong) spentGas * gasPrice, spec);
+                        _stateProvider.AddToBalance(gasBeneficiary, (ulong)spentGas * gasPrice, spec);
                     }
                 }
             }
@@ -346,7 +347,7 @@ namespace Nethermind.Evm
                 long refund = substate.ShouldRevert ? 0 : Math.Min(spentGas / 2L, substate.Refund + substate.DestroyList.Count * RefundOf.Destroy);
 
                 if (_logger.IsTrace) _logger.Trace("Refunding unused gas of " + unspentGas + " and refund of " + refund);
-                _stateProvider.AddToBalance(sender, (ulong) (unspentGas + refund) * gasPrice, spec);
+                _stateProvider.AddToBalance(sender, (ulong)(unspentGas + refund) * gasPrice, spec);
                 spentGas -= refund;
             }
 
