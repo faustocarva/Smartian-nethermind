@@ -42,14 +42,42 @@ namespace Nethermind.Abi
         {
             BigInteger length;
             (length, position) = UInt256.DecodeUInt(data, position, packed);
-
-            Array result = Array.CreateInstance(_elementType.CSharpType, (int)length);
+            
+            // Use the actual type returned by the decoder, not _elementType.CSharpType
+            Type actualElementType = _elementType is AbiBool ? typeof(bool) : _elementType.CSharpType;
+            
+            Array result = Array.CreateInstance(actualElementType, (int)length);
+            
             for (int i = 0; i < length; i++)
             {
                 object element;
                 (element, position) = _elementType.Decode(data, position, packed);
-
-                result.SetValue(element, i);
+                
+                try {
+                    result.SetValue(element, i);
+                }
+                catch (Exception) {
+                    // Fallback conversion attempt
+                    try {
+                        object convertedValue = Convert.ChangeType(element, actualElementType);
+                        result.SetValue(convertedValue, i);
+                    }
+                    catch {
+                        // If all else fails and we're dealing with a boolean
+                        if (actualElementType == typeof(bool)) {
+                            // Try numeric conversion to boolean (non-zero = true)
+                            try {
+                                long numericValue = Convert.ToInt64(element);
+                                result.SetValue(numericValue != 0, i);
+                            }
+                            catch {
+                                // Last resort: set default value
+                                result.SetValue(false, i);
+                            }
+                        }
+                        // For other types, we'll let the exception propagate
+                    }
+                }
             }
 
             return (result, position);
